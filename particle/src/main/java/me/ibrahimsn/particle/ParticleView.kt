@@ -33,6 +33,15 @@ class ParticleView @JvmOverloads constructor(
     @Dimension
     private var _particleMaxRadius = 10
 
+    @Dimension
+    private var _particleVelocity = 1.5
+
+    @Dimension
+    private var _particleLineWidth = 2f
+
+    @Dimension
+    private var _particleLineMaxLength = 220
+
     @ColorInt
     private var _particlesBackgroundColor = Color.BLACK
 
@@ -74,6 +83,32 @@ class ParticleView @JvmOverloads constructor(
             }
         }
 
+    var particleVelocity: Int
+        @Dimension get() = _particleVelocity
+        set(@Dimension value) {
+            _particleVelocity = when {
+                value <= 0 -> 1
+                else -> value
+            }
+        }
+    var particleLineWidth: Int
+        @Dimension get() = _particleLineWidth
+        set(@Dimension value) {
+            _particleLineWidth = when {
+                value <= 0 -> 1
+                else -> value
+            }
+        }
+
+    var particleLineMaxLength: Int
+        @Dimension get() = _particleLineMaxLength
+        set(@Dimension value) {
+            _particleLineMaxLength = when {
+                value <= 0 -> 1
+                else -> value
+            }
+        }
+
     var particlesBackgroundColor: Int
         @ColorInt get() = _particlesBackgroundColor
         set(@ColorInt value) {
@@ -110,7 +145,7 @@ class ParticleView @JvmOverloads constructor(
     private val paintLines: Paint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.FILL_AND_STROKE
-        strokeWidth = 2F
+        strokeWidth = _particleLineWidth
     }
 
     init {
@@ -301,10 +336,10 @@ class ParticleView @JvmOverloads constructor(
         dy = p1.y - p2.y
         dist = sqrt(dx * dx + dy * dy)
 
-        if (dist < 220) {
+        if (dist < _particleLineMaxLength) {
             path.moveTo(p1.x, p1.y)
             path.lineTo(p2.x, p2.y)
-            distRatio = (220 - dist) / 220
+            distRatio = (_particleLineMaxLength - dist) / _particleLineMaxLength
 
             paintLines.alpha = (min(p1.alpha, p2.alpha) * distRatio / 2).toInt()
             canvas.drawPath(path, paintLines)

@@ -4,6 +4,11 @@
         <attr name="particleCount" format="integer" />
         <attr name="particleMinRadius" format="integer" />
         <attr name="particleMaxRadius" format="integer" />
+
+        <attr name="particleVelocity" format="integer" />
+        <attr name="particleLineWidth" format="integer" />
+        <attr name="particleLineMaxLength" format="integer" />
+
         <attr name="particlesBackgroundColor" format="color" />
         <attr name="particleColor" format="color" />
         <attr name="particleLineColor" format="color" />

@@ -5,7 +5,7 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 30
     defaultConfig {
-        applicationId "me.ibrahimsn.particles"
+        applicationId "com.houstonash.particles"
         minSdkVersion 15
         targetSdkVersion 30
         versionCode 1

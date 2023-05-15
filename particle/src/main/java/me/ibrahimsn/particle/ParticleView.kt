@@ -34,7 +34,7 @@ class ParticleView @JvmOverloads constructor(
     private var _particleMaxRadius = 10
 
     @Dimension
-    private var _particleVelocity = 1.5
+    private var _particleVelocity = 1.5f
 
     @Dimension
     private var _particleLineWidth = 2f
@@ -83,19 +83,19 @@ class ParticleView @JvmOverloads constructor(
             }
         }
 
-    var particleVelocity: Int
+    var particleVelocity: Float
         @Dimension get() = _particleVelocity
         set(@Dimension value) {
             _particleVelocity = when {
-                value <= 0 -> 1
+                value <= 0 -> 1f
                 else -> value
             }
         }
-    var particleLineWidth: Int
+    var particleLineWidth: Float
         @Dimension get() = _particleLineWidth
         set(@Dimension value) {
             _particleLineWidth = when {
-                value <= 0 -> 1
+                value <= 0 -> 1f
                 else -> value
             }
         }
@@ -145,7 +145,7 @@ class ParticleView @JvmOverloads constructor(
     private val paintLines: Paint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.FILL_AND_STROKE
-        strokeWidth = _particleLineWidth
+        strokeWidth = particleLineWidth
     }
 
     init {
@@ -249,8 +249,8 @@ class ParticleView @JvmOverloads constructor(
                         Random.nextInt(particleMinRadius, particleMaxRadius).toFloat(),
                         Random.nextInt(0, width).toFloat(),
                         Random.nextInt(0, height).toFloat(),
-                        Random.nextInt(-2, 2),
-                        Random.nextInt(-2, 2),
+                        ((Random.nextFloat() - 0.5) * particleVelocity).toFloat(),
+                        ((Random.nextFloat() - 0.5) * particleVelocity).toFloat(),
                         Random.nextInt(150, 255)
                     )
                 )
@@ -336,10 +336,10 @@ class ParticleView @JvmOverloads constructor(
         dy = p1.y - p2.y
         dist = sqrt(dx * dx + dy * dy)
 
-        if (dist < _particleLineMaxLength) {
+        if (dist < particleLineMaxLength) {
             path.moveTo(p1.x, p1.y)
             path.lineTo(p2.x, p2.y)
-            distRatio = (_particleLineMaxLength - dist) / _particleLineMaxLength
+            distRatio = (particleLineMaxLength - dist) / particleLineMaxLength
 
             paintLines.alpha = (min(p1.alpha, p2.alpha) * distRatio / 2).toInt()
             canvas.drawPath(path, paintLines)

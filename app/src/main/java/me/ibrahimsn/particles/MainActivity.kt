@@ -3,7 +3,7 @@ package me.ibrahimsn.particles
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.houstonash.particles.R
-import me.ibrahimsn.particle.ParticleView
+import com.houstonash.particle.ParticleView
 
 class MainActivity : AppCompatActivity() {
 

@@ -1,4 +1,4 @@
-package me.ibrahimsn.particle
+package com.houstonash.particle
 
 import android.content.Context
 import android.graphics.*

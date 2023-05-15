@@ -1,4 +1,4 @@
-package me.ibrahimsn.particles
+package com.houstonash.particles
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4

@@ -1,4 +1,4 @@
-package me.ibrahimsn.particle
+package com.houstonash.particle
 
 data class Particle (
     var radius: Float,

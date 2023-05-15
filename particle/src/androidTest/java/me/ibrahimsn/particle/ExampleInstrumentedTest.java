@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("me.ibrahimsn.particle.test", appContext.getPackageName());
+        assertEquals("com.houstonash.particle.test", appContext.getPackageName());
     }
 }

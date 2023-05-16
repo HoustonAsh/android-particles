@@ -1,14 +1,20 @@
 package com.houstonash.particle
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.BlendMode
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
+import android.os.Build
 import android.util.AttributeSet
+import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.annotation.ColorInt
 import androidx.annotation.Dimension
 import kotlin.math.min
-import kotlin.math.sqrt
 import kotlin.random.Random
 
 class ParticleView @JvmOverloads constructor(
@@ -21,23 +27,29 @@ class ParticleView @JvmOverloads constructor(
     private var surfaceViewThread: SurfaceViewThread? = null
     private var hasSurface: Boolean = false
     private var hasSetup = false
+    private var tag = "[PARTICLES]"
 
-    private val path = Path()
-
-    // Attribute Defaults
     private var _particleCount = 20
 
     @Dimension
-    private var _particleMinRadius = 5
+    private var _particleMinRadius = 10
 
     @Dimension
-    private var _particleMaxRadius = 10
+    private var _particleMaxRadius = 25
 
     @Dimension
     private var _particleVelocity = 1.5f
 
     @Dimension
-    private var _particleLineWidth = 2f
+    private var _particleLineWidth = 15f
+
+    private var _particleLineMinAlpha = 0
+
+    private var _particleLineMaxAlpha = 255
+
+    private var _dtLineAlpha = -1
+
+    private var _particleLineHalfLength = -1
 
     @Dimension
     private var _particleLineMaxLength = 220
@@ -53,6 +65,8 @@ class ParticleView @JvmOverloads constructor(
 
     private var _particleLinesEnabled = true
 
+    private var _particleRotationEnabled = false
+
     // Core Attributes
     var particleCount: Int
         get() = _particleCount
@@ -62,9 +76,11 @@ class ParticleView @JvmOverloads constructor(
                 value < 0 -> 0
                 else -> value
             }
+
+            Log.d(tag, "particleCount set: $_particleCount")
         }
 
-    var particleMinRadius: Int
+    private var particleMinRadius: Int
         @Dimension get() = _particleMinRadius
         set(@Dimension value) {
             _particleMinRadius = when {
@@ -72,80 +88,138 @@ class ParticleView @JvmOverloads constructor(
                 value >= particleMaxRadius -> 1
                 else -> value
             }
+
+            Log.d(tag, "particleMinRadius set: $_particleMinRadius")
         }
 
-    var particleMaxRadius: Int
+    private var particleMaxRadius: Int
         @Dimension get() = _particleMaxRadius
         set(@Dimension value) {
             _particleMaxRadius = when {
                 value <= particleMinRadius -> particleMinRadius + 1
                 else -> value
             }
+
+            Log.d(tag, "particleMaxRadius set: $_particleMaxRadius")
         }
 
-    var particleVelocity: Float
+    private var particleVelocity: Float
         @Dimension get() = _particleVelocity
         set(@Dimension value) {
             _particleVelocity = when {
                 value <= 0 -> 1f
                 else -> value
             }
+
+            Log.d(tag, "particleVelocity set: $_particleVelocity")
         }
-    var particleLineWidth: Float
+    private var particleLineWidth: Float
         @Dimension get() = _particleLineWidth
         set(@Dimension value) {
             _particleLineWidth = when {
-                value <= 0 -> 1f
+                value < 0 -> 0f
                 else -> value
             }
+            Log.d(tag, "particleLineWidth set: $_particleLineWidth")
         }
 
-    var particleLineMaxLength: Int
+    private var particleLineMinAlpha: Int
+        get() = _particleLineMinAlpha
+        set(value) {
+            _particleLineMinAlpha = when {
+                value < 0 -> 0
+                value >= _particleLineMaxAlpha -> 1
+                value > 255 -> 255
+                else -> value
+            }
+
+            Log.d(tag, "particleLineMinAlpha set: $_particleLineMinAlpha")
+        }
+
+    private var particleLineMaxAlpha: Int
+        get() = _particleLineMaxAlpha
+        set(value) {
+            _particleLineMaxAlpha = when {
+                value < particleLineMinAlpha -> particleLineMinAlpha
+                value > 255 -> 255
+                else -> value
+            }
+
+            Log.d(tag, "particleLineMaxAlpha set: $_particleLineMaxAlpha")
+        }
+
+    private var particleLineMaxLength: Int
         @Dimension get() = _particleLineMaxLength
         set(@Dimension value) {
             _particleLineMaxLength = when {
-                value <= 0 -> 1
+                value <= 0 -> 0
                 else -> value
             }
+            Log.d(tag, "particleLineMaxLength set: $_particleLineMaxLength")
         }
 
-    var particlesBackgroundColor: Int
+    private var particlesBackgroundColor: Int
         @ColorInt get() = _particlesBackgroundColor
         set(@ColorInt value) {
             _particlesBackgroundColor = value
+
+            Log.d(tag, "particlesBackgroundColor set: $particlesBackgroundColor")
         }
 
-    var particleColor: Int
+    private var particleColor: Int
         @ColorInt get() = _particleColor
         set(@ColorInt value) {
             _particleColor = value
             paintParticles.color = value
+
+            Log.d(tag, "particleColor set: $_particleColor")
         }
 
-    var particleLineColor: Int
+    private var particleLineColor: Int
         @ColorInt get() = _particleLineColor
         set(@ColorInt value) {
             _particleLineColor = value
             paintLines.color = value
+            Log.d(tag, "particleLineColor set: $_particleLineColor")
         }
 
     var particleLinesEnabled: Boolean
         get() = _particleLinesEnabled
         set(value) {
             _particleLinesEnabled = value
+            Log.d(tag, "particleLinesEnabled set: $_particleLinesEnabled")
         }
 
+    var particleRotationEnabled: Boolean
+        get() = _particleRotationEnabled
+        set(value) {
+            _particleRotationEnabled = value
+            Log.d(tag, "particleRotationEnabled set: $_particleRotationEnabled")
+        }
     // Paints
     private val paintParticles: Paint = Paint().apply {
-        isAntiAlias = true
         style = Paint.Style.FILL
-        strokeWidth = 2F
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            blendMode = BlendMode.SRC_OVER
+        else
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
+    }
+
+    private val paintParticlesErase: Paint = Paint().apply {
+        style = Paint.Style.FILL
+        color = _particlesBackgroundColor
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            blendMode = BlendMode.SRC
+        else
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC)
     }
 
     private val paintLines: Paint = Paint().apply {
-        isAntiAlias = true
-        style = Paint.Style.FILL_AND_STROKE
-        strokeWidth = particleLineWidth
+        style = Paint.Style.STROKE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            blendMode = BlendMode.SRC_OVER
+        else
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
     }
 
     init {
@@ -178,6 +252,31 @@ class ParticleView @JvmOverloads constructor(
                 particleMaxRadius
             )
 
+            particleVelocity = typedArray.getFloat(
+                R.styleable.ParticleView_particleVelocity,
+                particleVelocity
+            )
+
+            particleLineWidth = typedArray.getFloat(
+                R.styleable.ParticleView_particleLineWidth,
+                particleLineWidth
+            )
+
+            particleLineMinAlpha = typedArray.getInt(
+                R.styleable.ParticleView_particleLineMinAlpha,
+                particleLineMinAlpha
+            )
+
+            particleLineMaxAlpha = typedArray.getInt(
+                R.styleable.ParticleView_particleLineMaxAlpha,
+                particleLineMaxAlpha
+            )
+
+            particleLineMaxLength = typedArray.getInt(
+                R.styleable.ParticleView_particleLineMaxLength,
+                particleLineMaxLength
+            )
+
             particlesBackgroundColor = typedArray.getColor(
                 R.styleable.ParticleView_particlesBackgroundColor,
                 particlesBackgroundColor
@@ -196,6 +295,11 @@ class ParticleView @JvmOverloads constructor(
             particleLinesEnabled = typedArray.getBoolean(
                 R.styleable.ParticleView_particleLinesEnabled,
                 particleLinesEnabled
+            )
+
+            particleRotationEnabled = typedArray.getBoolean(
+                R.styleable.ParticleView_particleRotationEnabled,
+                particleRotationEnabled
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -241,6 +345,8 @@ class ParticleView @JvmOverloads constructor(
 
     private fun setupParticles() {
         if (!hasSetup) {
+            particleLineMaxLength *= particleLineMaxLength
+            _particleLineHalfLength = _particleLineMaxLength / 16
             hasSetup = true
             particles.clear()
             for (i in 0 until particleCount) {
@@ -251,7 +357,7 @@ class ParticleView @JvmOverloads constructor(
                         Random.nextInt(0, height).toFloat(),
                         ((Random.nextFloat() - 0.5) * particleVelocity).toFloat(),
                         ((Random.nextFloat() - 0.5) * particleVelocity).toFloat(),
-                        Random.nextInt(150, 255)
+                        Random.nextInt(180, 255)
                     )
                 )
             }
@@ -265,8 +371,14 @@ class ParticleView @JvmOverloads constructor(
 
         override fun run() {
             setupParticles()
+            _dtLineAlpha = particleLineMaxAlpha - particleLineMinAlpha
+            var prevTime = System.nanoTime()
+            val canvasWidth = width.toFloat()
+            val canvasHeight = height.toFloat()
 
             while (running) {
+                val dtTime = (System.nanoTime() - prevTime)/10_000_000f
+                prevTime = System.nanoTime()
                 try {
                     canvas = holder.lockCanvas()
 
@@ -275,43 +387,39 @@ class ParticleView @JvmOverloads constructor(
                         canvas?.drawColor(particlesBackgroundColor, PorterDuff.Mode.SRC)
 
                         for (i in 0 until particleCount) {
-                            particles[i].x += particles[i].vx
-                            particles[i].y += particles[i].vy
+                            particles[i].x += particles[i].vx * dtTime
+                            particles[i].y += particles[i].vy * dtTime
 
-                            if (particles[i].x < 0) {
-                                particles[i].x = width.toFloat()
-                            } else if (particles[i].x > width) {
+                            if (particles[i].x < - particles[i].radius)
+                                particles[i].x = canvasWidth
+                            else if (particles[i].x > canvasWidth + particles[i].radius)
                                 particles[i].x = 0F
-                            }
 
-                            if (particles[i].y < 0) {
-                                particles[i].y = height.toFloat()
-                            } else if (particles[i].y > height) {
+
+                            if (particles[i].y < - particles[i].radius)
+                                particles[i].y = canvasHeight
+                            else if (particles[i].y > canvasHeight + particles[i].radius)
                                 particles[i].y = 0F
-                            }
+
 
                             canvas?.let {
-                                if (particleLinesEnabled) {
-                                    for (j in 0 until particleCount) {
-                                        if (i != j) {
-                                            linkParticles(it, particles[i], particles[j])
-                                        }
-                                    }
-                                }
+                                if (particleLinesEnabled)
+                                    for (j in i + 1 until particleCount)
+                                        linkParticles(it, particles[i], particles[j])
                             }
 
                             paintParticles.alpha = particles[i].alpha
+                            canvas?.drawCircle(particles[i].x, particles[i].y, particles[i].radius, paintParticlesErase)
                             canvas?.drawCircle(particles[i].x, particles[i].y, particles[i].radius, paintParticles)
                         }
                     }
-
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
-                    if (canvas != null) {
+                    if (canvas != null)
                         holder.unlockCanvasAndPost(canvas)
-                    }
                 }
+                yield()
             }
         }
 
@@ -331,20 +439,33 @@ class ParticleView @JvmOverloads constructor(
     private var dist: Float = 0f
     private var distRatio: Float = 0f
 
-    private fun linkParticles(canvas: Canvas, p1: Particle, p2: Particle) {
+    private fun linkParticles(canvas: Canvas, p1: Particle, p2: Particle): Float {
         dx = p1.x - p2.x
         dy = p1.y - p2.y
-        dist = sqrt(dx * dx + dy * dy)
+        dist = dx * dx + dy * dy
 
         if (dist < particleLineMaxLength) {
-            path.moveTo(p1.x, p1.y)
-            path.lineTo(p2.x, p2.y)
             distRatio = (particleLineMaxLength - dist) / particleLineMaxLength
 
-            paintLines.alpha = (min(p1.alpha, p2.alpha) * distRatio / 2).toInt()
-            canvas.drawPath(path, paintLines)
+            paintLines.alpha = (particleLineMinAlpha + _dtLineAlpha * distRatio).toInt().coerceAtMost(min(p1.alpha, p2.alpha))
+            paintLines.strokeWidth = min(particleLineWidth, min(p1.radius, p2.radius)) * (if (distRatio < 0.65)  distRatio + 0.2f else 1f)
+            canvas.drawLine(p1.x, p1.y, p2.x, p2.y, paintLines)
 
-            path.reset()
+            if (particleRotationEnabled && dist < _particleLineHalfLength) {
+                // cos(1 degree) = 0.9998476
+                // sin(1 degree) = 0.0174524
+                var newX = p1.vx * 0.9998476f - p1.vy * 0.0174524f
+                var newY = p1.vx * 0.0174524f - p1.vy * 0.9998476f
+                p1.vx = newX
+                p1.vy = newY
+
+                newX = p2.vx * 0.9998476f - p2.vy * 0.0174524f
+                newY = p2.vx * 0.0174524f - p2.vy * 0.9998476f
+                p2.vx = newX
+                p2.vy = newY
+            }
         }
+
+        return dist
     }
 }

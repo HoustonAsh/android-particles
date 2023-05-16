@@ -5,14 +5,18 @@
         <attr name="particleMinRadius" format="integer" />
         <attr name="particleMaxRadius" format="integer" />
 
-        <attr name="particleVelocity" format="integer" />
-        <attr name="particleLineWidth" format="integer" />
+        <attr name="particleVelocity" format="float" />
+        <attr name="particleLineWidth" format="float" />
+        <attr name="particleLineMinAlpha" format="integer" />
+        <attr name="particleLineMaxAlpha" format="integer" />
         <attr name="particleLineMaxLength" format="integer" />
 
         <attr name="particlesBackgroundColor" format="color" />
         <attr name="particleColor" format="color" />
         <attr name="particleLineColor" format="color" />
         <attr name="particleLinesEnabled" format="boolean" />
+
+        <attr name="particleRotationEnabled" format="boolean" />
     </declare-styleable>
 
     <attr name="ParticleViewStyle" format="reference" />
